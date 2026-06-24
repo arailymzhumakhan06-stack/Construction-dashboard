@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Құрылыс — Жамбыл облысы</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f6fa;--fg:#1a2744;--border:#dde4ed;
+  --card:#fff;--sidebar:#e8eef6;--sidebar-border:#d5dce8;
+  --primary:#0079F2;--muted:#7a8aa8;
+  --blue:#0079F2;--teal:#0E8C5A;--orange:#F97316;--red:#dc2626;--purple:#7C3AED;
+  --green:#16a34a;--amber:#d97706;--muted-c:#94a3b8;
+  --sb-w:36px;
+}
+body.dark{
+  --bg:#131d2e;--fg:#e8f0ff;--border:#1e2f44;
+  --card:#172035;--sidebar:#0f1828;--sidebar-border:#1a2b40;--muted:#8fa4c0;
+}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--fg);display:flex;height:100vh;overflow:hidden;font-size:13px}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ── SIDEBAR ── */
+#sb{display:flex;flex-direction:column;background:var(--sidebar);border-right:1px solid var(--sidebar-border);width:var(--sb-w);transition:width .2s;flex-shrink:0;overflow:hidden}
+#sb.open{width:196px}
+#sb-btn{height:56px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--sidebar-border);cursor:pointer;width:100%;padding:0 10px;color:var(--primary)}
+.lo{display:none;align-items:center;gap:6px;font-size:12px;font-weight:700;white-space:nowrap;width:100%}
+#sb.open .lo{display:flex}
+.lc{font-size:9px;font-weight:700;letter-spacing:.18em;writing-mode:vertical-rl;transform:rotate(180deg);color:var(--primary)}
+#sb.open .lc{display:none}
+nav{flex:1;overflow-y:auto;padding:8px 0;display:none}
+#sb.open nav{display:block}
+.ns{margin-bottom:4px}
+.nl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:3px 10px;display:block}
+.nk{display:block;padding:4px 16px;font-size:11px;color:var(--muted);text-decoration:none;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
+.nk:hover{background:color-mix(in srgb,var(--primary) 8%,transparent);color:var(--fg)}
+.nk.active{background:color-mix(in srgb,var(--primary) 13%,transparent);color:var(--primary);font-weight:600}
+
+/* ── MAIN ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+header{height:56px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:10px;padding:0 16px;flex-shrink:0}
+.htitle{font-weight:700;font-size:10.5px;color:var(--primary);line-height:1.35;flex:1}
+.cb{display:flex;align-items:center;justify-content:center;height:26px;min-width:26px;padding:0 7px;border-radius:6px;background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted)}
+.cb svg{width:13px;height:13px}
+
+/* ── PAGE ── */
+main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.page{display:none;flex:1;overflow-y:auto;padding:12px 16px 20px}
+.page.active{display:block}
+
+/* ── PAGE TITLE ── */
+.ptitle{font-size:13px;font-weight:700;line-height:1.4;margin-bottom:10px}
+.ptitle em{font-style:normal;color:var(--primary)}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;gap:8px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--ac,var(--blue));border-radius:8px 0 0 8px}
+.kl{font-size:10px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.kv{font-size:22px;font-weight:800;line-height:1;color:var(--fg)}
+.ks{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* ── CHART GRID ── */
+.cg{display:grid;gap:10px;margin-bottom:12px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px}
+.ct{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.cw{position:relative;width:100%}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow:auto;border-radius:8px;border:1px solid var(--border);background:var(--card)}
+.tbl-head{padding:8px 12px;border-bottom:1px solid var(--border);background:#f8fafc;font-size:11px;font-weight:700;color:var(--blue)}
+body.dark .tbl-head{background:#1a2b40}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:5px 8px;font-size:10px;font-weight:600;color:#374151;border-bottom:1px solid var(--border);background:#f1f5f9;white-space:nowrap;text-align:left;position:sticky;top:0;z-index:1}
+body.dark th{background:#1a2b40;color:#94a3b8}
+td{padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:nth-child(even) td{background:color-mix(in srgb,var(--muted) 4%,transparent)}
+tr:last-child td{border-bottom:none}
+
+/* ── BADGE ── */
+.b{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:1px 7px;white-space:nowrap}
+.bg{background:#dcfce7;color:#15803d} .bo{background:#fff7ed;color:#c2410c}
+.br{background:#fef2f2;color:#dc2626} .bb{background:#eff6ff;color:#1d4ed8}
+.bp{background:#f5f3ff;color:#6d28d9} .bm{background:#f1f5f9;color:#64748b}
+.by{background:#fefce8;color:#a16207}
+
+/* ── PROGRESS ── */
+.pw{width:72px;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:4px}
+.pf{height:100%;border-radius:4px}
+
+/* ── ISSUE ── */
+.issue{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:8px;padding:9px 12px}
+.it{font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px}
+.ib{font-size:11px;color:var(--muted);line-height:1.55}
+
+/* ── DIVIDER ── */
+.sep{height:1px;background:var(--border);margin:8px 0}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--muted) 30%,transparent);border-radius:3px}
+
+@media print{#sb,header .cb{display:none}.page.active{display:block}}
+</style>
+</head>
+<body>
+
+<!-- ════ SIDEBAR ════ -->
+<div id="sb">
+  <button id="sb-btn" onclick="document.getElementById('sb').classList.toggle('open')">
+    <span class="lo">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+      Құрылыс
+    </span>
+    <span class="lc">Құрылыс</span>
+  </button>
+  <nav>
+    <div class="ns"><span class="nl">Жалпы</span>
+      <a class="nk active" data-p="ov" href="#">📊 Жалпы шолу</a>
+    </div>
+    <div class="ns"><span class="nl">Салалар</span>
+      <a class="nk" data-p="bil" href="#">📚 Білім</a>
+      <a class="nk" data-p="den" href="#">🏥 Денсаулық</a>
+      <a class="nk" data-p="sp" href="#">⚽ Спорт</a>
+      <a class="nk" data-p="mad" href="#">🎭 Мәдениет</a>
+      <a class="nk" data-p="aul" href="#">🌾 Ауыл шаруашылығы</a>
+      <a class="nk" data-p="ish" href="#">🏛 Ішкі істер</a>
+      <a class="nk" data-p="tur" href="#">🏘 Тұрғын үй</a>
+      <a class="nk" data-p="iki" href="#">🔧 ИКИ</a>
+    </div>
+  </nav>
+</div>
+
+<!-- ════ MAIN ════ -->
+<div id="main">
+  <header>
+    <div class="htitle">ЖАМБЫЛ ОБЛЫСЫ ӘКІМДІГІНІҢ ҚҰРЫЛЫС БАСҚАРМАСЫ · 2026 ЖЫЛ · ЖОБАЛАР ІСКЕ АСЫРЫЛУЫ · 13.05.2026</div>
+    <button class="cb" onclick="window.print()" title="Басып шығару">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    </button>
+    <button class="cb" onclick="toggleDark()" title="Тема">
+      <svg id="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="ic-sun" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </header>
+  <main>
+
+<!-- ══════════════════════════════════════
+     ЖАЛПЫ ШОЛУ
+══════════════════════════════════════ -->
+<div class="page active" id="page-ov">
+  <div class="ptitle">2026 жылы Құрылыс басқармасы арқылы <em>143 жоба</em> іске асырылуда — сметалық құны <em>242,0 млрд теңге</em></div>
+
+  <!-- KPI row -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">143</div><div class="ks">жоба</div></div>
+    <div class="kpi" style="--ac:var(--purple)"><div class="kl">Сметалық құны</div><div class="kv" style="color:var(--purple)">242,0</div><div class="ks">млрд теңге</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">86,2</div><div class="ks">млрд теңге</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">2026 тапсыру</div><div class="kv" style="color:var(--teal)">96</div><div class="ks">нысан</div></div>
+    <div class="kpi" style="--ac:var(--muted-c)"><div class="kl">2027 өтпелі</div><div class="kv" style="color:var(--muted-c)">47</div><div class="ks">нысан</div></div>
+    <div class="kpi" style="--ac:var(--green)"><div class="kl">Аяқталды</div><div class="kv" style="color:var(--green)">9</div><div class="ks">бүгінгі күнге</div></div>
+  </div>
+
+  <!-- Charts row 1: 3 columns -->
+  <div class="cg" style="grid-template-columns:2fr 1fr 1fr">
+    <div class="cc">
+      <div class="ct">Нысандар саны — салалар бойынша</div>
+      <div class="cw" style="height:220px"><canvas id="c-ov-n"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">2026 Тапсыру vs 2027 Өтпелі</div>
+      <div class="cw" style="height:220px"><canvas id="c-ov-pie"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">Қаржыландыру бағдарламалары (млрд тг)</div>
+      <div class="cw" style="height:220px"><canvas id="c-ov-prog"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Charts row 2: 2 columns -->
+  <div class="cg" style="grid-template-columns:3fr 2fr">
+    <div class="cc">
+      <div class="ct">Смета vs 2026 Бюджет — салалар бойынша (млрд тг)</div>
+      <div class="cw" style="height:210px"><canvas id="c-ov-bud"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="ct">2026 тапсыру жоспары орындалуы (%)</div>
+      <div class="cw" style="height:210px"><canvas id="c-ov-del"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Summary table -->
+  <div class="tbl-wrap">
+    <div class="tbl-head">📋 Салалар бойынша жиынтық кесте</div>
+    <table>
+      <thead><tr>
+        <th>Сала</th><th style="text-align:center">Нысан</th>
+        <th style="text-align:right">Смета (млрд)</th>
+        <th style="text-align:right">2026 бюджет (млрд)</th>
+        <th style="text-align:center">Тапсыру 2026</th>
+        <th style="text-align:center">2027 өтпелі</th>
+        <th style="text-align:center">Аяқталды</th>
+        <th style="text-align:center">Орындалу</th>
+      </tr></thead>
+      <tbody id="ov-tb"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     БІЛІМ
+══════════════════════════════════════ -->
+<div class="page" id="page-bil">
+  <div class="ptitle"><em>📚 Білім саласы</em> · 14 нысан · Смета: 22,8 млрд тг · 2026 бюджет: 10,0 млрд тг</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">14</div></div>
+    <div class="kpi" style="--ac:var(--purple)"><div class="kl">Смета</div><div class="kv" style="color:var(--purple)">22,8</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">10,0</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">11</div></div>
+    <div class="kpi" style="--ac:var(--muted-c)"><div class="kl">2027 өтпелі</div><div class="kv" style="color:var(--muted-c)">3</div></div>
+    <div class="kpi" style="--ac:var(--green)"><div class="kl">Аяқталды</div><div class="kv" style="color:var(--green)">1</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="cc"><div class="ct">Аудан бойынша нысандар</div><div class="cw" style="height:200px"><canvas id="c-bil-d"></canvas></div></div>
+    <div class="cc"><div class="ct">Жаңа мектеп vs Жапсарлас</div><div class="cw" style="height:200px"><canvas id="c-bil-t"></canvas></div></div>
+    <div class="cc"><div class="ct">Бағдарлама бойынша (нысан / млрд тг)</div><div class="cw" style="height:200px"><canvas id="c-bil-p"></canvas></div></div>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:10px">
+    <div class="tbl-head">📋 Білім нысандарының тізімі</div>
+    <table>
+      <thead><tr><th>Нысан</th><th>Аудан</th><th>Түрі</th><th>Бағдарлама</th><th style="text-align:center">Тапсыру</th><th style="text-align:center">Мәртебе</th></tr></thead>
+      <tbody>
+        <tr><td>ІТ лицей-интернат жапсарлас</td><td>Тараз қ.</td><td>Жапсарлас</td><td>Облыстық бюджет</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>№27 мектеп жапсарлас</td><td>Тараз қ.</td><td>Жапсарлас</td><td>Облыстық бюджет</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b bm">2027 өтпелі</span></td></tr>
+        <tr><td>Құсақ а. мектеп жапсарлас</td><td>Байзақ ауд.</td><td>Жапсарлас</td><td>Ауыл-Ел бесігі</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Қостөбе а. 100 орындық мектеп</td><td>Жамбыл ауд.</td><td>Жаңа</td><td>Облыстық бюджет</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Тоғызтарау а. мектеп жапсарлас</td><td>Жамбыл ауд.</td><td>Жапсарлас</td><td>Ауыл-Ел бесігі</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Күшаман а. 80 орындық мектеп</td><td>Мойынқұм ауд.</td><td>Жаңа</td><td>Облыстық бюджет</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b bm">2027 өтпелі</span></td></tr>
+        <tr><td>Қарақат а. мектеп жапсарлас</td><td>Т.Рысқұлов ауд.</td><td>Жапсарлас</td><td>Ауыл-Ел бесігі</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Ойық а. мектеп жапсарлас</td><td>Талас ауд.</td><td>Жапсарлас</td><td>Ауыл-Ел бесігі</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Ғ.Мұратбаев мектебіне жапсарлас</td><td>Шу ауд.</td><td>Жапсарлас</td><td>Облыстық бюджет</td><td style="text-align:center">✅ Аяқталды</td><td style="text-align:center"><span class="b bg">✓ Тапсырылды</span></td></tr>
+        <tr><td>Жайсаң а. 120 орындық мектеп</td><td>Шу ауд.</td><td>Жаңа</td><td>Облыстық бюджет</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>С.Шәкіров мектебіне жапсарлас</td><td>Шу ауд.</td><td>Жапсарлас</td><td>Ауыл-Ел бесігі</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Шоқпар а. мектеп жапсарлас</td><td>Шу ауд.</td><td>Жапсарлас</td><td>Ауыл-Ел бесігі</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Еңбекші а. мектеп жапсарлас</td><td>Шу ауд.</td><td>Жапсарлас</td><td>Ауыл-Ел бесігі</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Көктөбе а. 120 орындық мектеп</td><td>Шу ауд.</td><td>Жаңа</td><td>Облыстық бюджет</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b bm">2027 өтпелі</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="issue"><div class="it">⚠️ Өзекті мәсele</div><div class="ib">ІТ лицей жапсарласына ОБ-дан қосымша КШ жасалмауда. 5 мектепте ЖСҚ түзетілуде: Ғ.Мұратбаев (+447,8 млн), Ойық (+608,5 млн), Қостөбе / Жайсаң / Көктөбе — сметалық шегінде сараптама алынды немесе алынуда.</div></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ДЕНСАУЛЫҚ
+══════════════════════════════════════ -->
+<div class="page" id="page-den">
+  <div class="ptitle"><em>🏥 Денсаулық сақтау саласы</em> · 5 нысан · Смета: 86,9 млрд тг · 2026 бюджет: 38,8 млрд тг</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">5</div></div>
+    <div class="kpi" style="--ac:var(--red)"><div class="kl">Смета (ең ірі)</div><div class="kv" style="color:var(--red)">86,9</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">38,8</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">2</div></div>
+    <div class="kpi" style="--ac:var(--muted-c)"><div class="kl">2027 өтпелі</div><div class="kv" style="color:var(--muted-c)">3</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1.6fr 1fr 1fr">
+    <div class="cc"><div class="ct">Бюджет аудан бойынша (млрд тг)</div><div class="cw" style="height:200px"><canvas id="c-den-d"></canvas></div></div>
+    <div class="cc"><div class="ct">Тапсыру статусы</div><div class="cw" style="height:200px"><canvas id="c-den-s"></canvas></div></div>
+    <div class="cc"><div class="ct">Смета vs Бюджет (млрд тг)</div><div class="cw" style="height:200px"><canvas id="c-den-b"></canvas></div></div>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:10px">
+    <div class="tbl-head">🏥 Денсаулық нысандары</div>
+    <table>
+      <thead><tr><th>Нысан</th><th>Аудан</th><th style="text-align:center">Тапсыру</th><th style="text-align:center">Мәртебе</th></tr></thead>
+      <tbody>
+        <tr><td>КТ және маммография модульдеріне гараж</td><td>Тараз қ.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Биобанк құрылысы (БҚПҒЗИ аумағы)</td><td>Қордай ауд.</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b br">⚠️ КШ қол қойылмаған</span></td></tr>
+        <tr><td>Бункер — жер асты қоймасы</td><td>Қордай ауд.</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b br">⚠️ КШ қол қойылмаған</span></td></tr>
+        <tr><td>Талас аудандық аурухананы жаңарту</td><td>Талас ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Шу ауруханасы қабылдау бөлімі</td><td>Шу ауд.</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b bm">2027 өтпелі</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="issue"><div class="it">⚠️ Биобанк және Бункер нысандары — мердігер КШ-ға қол қоймаған</div><div class="ib">Сонымен қатар 4 биологиялық қауіпсіздік нысаны Денсаулық сақтау министрлігі теңгеріміне қабылданбаған: Биофармзауыт 1-2 кезең (15,2 млрд, 2021 ж-дан пайдалануда), БҚПҒЗИ физ. қорғау (965 млн, 2024 желт.), BSL-3 цехы (акт 09.06.2025).</div></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     СПОРТ
+══════════════════════════════════════ -->
+<div class="page" id="page-sp">
+  <div class="ptitle"><em>⚽ Спорт саласы</em> · 7 нысан · Смета: 3,2 млрд тг · 2026 бюджет: 1,7 млрд тг · Барлығы 2026 ж. тапсырылады</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">7</div></div>
+    <div class="kpi" style="--ac:var(--purple)"><div class="kl">Смета</div><div class="kv" style="color:var(--purple)">3,2</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">1,7</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">7</div><div class="ks">барлығы</div></div>
+    <div class="kpi" style="--ac:var(--red)"><div class="kl">Проблемалы</div><div class="kv" style="color:var(--red)">2</div><div class="ks">Әкім бақылауында</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1.6fr 1fr 1fr">
+    <div class="cc"><div class="ct">Аудан бойынша нысандар</div><div class="cw" style="height:200px"><canvas id="c-sp-d"></canvas></div></div>
+    <div class="cc"><div class="ct">Жоспарлы vs Проблемалы</div><div class="cw" style="height:200px"><canvas id="c-sp-s"></canvas></div></div>
+    <div class="cc"><div class="ct">Проблемалы нысандар: ҚМЖ (%)</div><div class="cw" style="height:200px"><canvas id="c-sp-k"></canvas></div></div>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:10px">
+    <div class="tbl-head">⚽ Спорт нысандарының тізімі</div>
+    <table>
+      <thead><tr><th>Нысан</th><th>Аудан</th><th style="text-align:center">Тапсыру</th><th style="text-align:center">ҚМЖ</th><th style="text-align:center">Мәртебе</th></tr></thead>
+      <tbody>
+        <tr><td>Спорт кешені (Тастөбе)</td><td>Жамбыл ауд.</td><td style="text-align:center">2026</td><td style="text-align:center">—</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Спорт кешені (Нұрлыкент)</td><td>Жуалы ауд.</td><td style="text-align:center">2026</td><td style="text-align:center">—</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Спорт кешені (Көлтоған)</td><td>Жуалы ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><b style="color:var(--orange)">60%</b></td><td style="text-align:center"><span class="b br">⚠️ Қаржы бөлінбеген</span></td></tr>
+        <tr><td>Спорт кешені (Үлкен Сұлутөр)</td><td>Қордай ауд.</td><td style="text-align:center">2026</td><td style="text-align:center">—</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Спорт кешені (Сарымолдаев)</td><td>Меркі ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><b style="color:var(--red)">20%</b></td><td style="text-align:center"><span class="b br">⚠️ КШ бұзылды</span></td></tr>
+        <tr><td>Спорт кешені (Құлан, Арай алқабы)</td><td>Т.Рысқұлов ауд.</td><td style="text-align:center">2026</td><td style="text-align:center">—</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Спорт зал (Шоқпар) + мектеп жаңарту</td><td>Шу ауд.</td><td style="text-align:center">2026</td><td style="text-align:center">—</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="cg" style="grid-template-columns:1fr 1fr">
+    <div class="issue"><div class="it">⚠️ Жуалы ауд. Көлтоған а. спорт кешені</div><div class="ib">Аяқталу мерзімі — 2024 ж. ҚМЖ: 60%. 2025 ж. қаржы қысқартылды, 2026 жылға қаржы бөлінбеген. Нысан 2026 жылға өтпелі болды.</div></div>
+    <div class="issue"><div class="it">⚠️ Меркі ауд. Сарымолдаев а. спорт кешені</div><div class="ib">Аяқталу мерзімі — 2024 ж. ҚМЖ: 20%. Сот шешімімен мердігер жосықсыз деп танылды. КШ біржақты бұзылды. Аванс + тұрақсыздық айыбы өндіріледі.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     МӘДЕНИЕТ
+══════════════════════════════════════ -->
+<div class="page" id="page-mad">
+  <div class="ptitle"><em>🎭 Мәдениет саласы</em> · 11 нысан · Смета: 7,5 млрд тг · 2026 бюджет: 3,5 млрд тг</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">11</div></div>
+    <div class="kpi" style="--ac:var(--purple)"><div class="kl">Смета</div><div class="kv" style="color:var(--purple)">7,5</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">3,5</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">10</div></div>
+    <div class="kpi" style="--ac:var(--muted-c)"><div class="kl">2027 өтпелі</div><div class="kv" style="color:var(--muted-c)">1</div></div>
+    <div class="kpi" style="--ac:var(--green)"><div class="kl">Аяқталды</div><div class="kv" style="color:var(--green)">2</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1.6fr 1fr 1fr">
+    <div class="cc"><div class="ct">Аудан бойынша нысандар</div><div class="cw" style="height:200px"><canvas id="c-mad-d"></canvas></div></div>
+    <div class="cc"><div class="ct">Тапсыру vs Өтпелі</div><div class="cw" style="height:200px"><canvas id="c-mad-s"></canvas></div></div>
+    <div class="cc"><div class="ct">Жалпы мәртебе</div><div class="cw" style="height:200px"><canvas id="c-mad-p"></canvas></div></div>
+  </div>
+  <div class="tbl-wrap">
+    <div class="tbl-head">🎭 Мәдениет нысандарының тізімі</div>
+    <table>
+      <thead><tr><th>Нысан</th><th>Аудан</th><th style="text-align:center">Тапсыру</th><th style="text-align:center">Мәртебе</th></tr></thead>
+      <tbody>
+        <tr><td>Этноауыл кешені</td><td>Тараз қ.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Төрткөл керуен сарайы</td><td>Тараз қ.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Ш.Ниязбеков а. мәдениет үйі</td><td>Жамбыл ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Бесағаш а. мәдениет үйі</td><td>Жамбыл ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Көлбастау а. мәдениет үйі</td><td>Жуалы ауд.</td><td style="text-align:center">✅ Аяқталды</td><td style="text-align:center"><span class="b bg">✓ Тапсырылды</span></td></tr>
+        <tr><td>Қақпатас а. мәдениет үйі</td><td>Қордай ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b by">Қабылдау жүргізілуде</span></td></tr>
+        <tr><td>Үлкен Сұлутөр а. мәдениет үйі</td><td>Қордай ауд.</td><td style="text-align:center">✅ Аяқталды</td><td style="text-align:center"><span class="b bg">✓ Тапсырылды</span></td></tr>
+        <tr><td>Жаңатұрмыс а. мәдениет үйі</td><td>Т.Рысқұлов ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Ойық а. МҮ қайта жаңғырту</td><td>Талас ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Үшарал а. МҮ қайта жаңғырту</td><td>Талас ауд.</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>1 нысан өтпелі</td><td>—</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b bm">2027 өтпелі</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     АУЫЛ ШАРУАШЫЛЫҒЫ
+══════════════════════════════════════ -->
+<div class="page" id="page-aul">
+  <div class="ptitle"><em>🌾 Ауыл шаруашылығы саласы</em> · 8 нысан · Смета: 9,3 млрд тг · 2026 бюджет: 4,2 млрд тг</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--teal)">8</div></div>
+    <div class="kpi" style="--ac:var(--purple)"><div class="kl">Смета</div><div class="kv" style="color:var(--purple)">9,3</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">4,2</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">6</div></div>
+    <div class="kpi" style="--ac:var(--muted-c)"><div class="kl">2027 өтпелі</div><div class="kv" style="color:var(--muted-c)">2</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="cc"><div class="ct">Нысан түрлері</div><div class="cw" style="height:200px"><canvas id="c-aul-t"></canvas></div></div>
+    <div class="cc"><div class="ct">Тапсыру 2026 vs 2027</div><div class="cw" style="height:200px"><canvas id="c-aul-s"></canvas></div></div>
+    <div class="cc"><div class="ct">Смета vs Бюджет (млрд тг)</div><div class="cw" style="height:200px"><canvas id="c-aul-b"></canvas></div></div>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:10px">
+    <div class="tbl-head">🌾 Ауыл шаруашылығы нысандары</div>
+    <table>
+      <thead><tr><th>Нысан</th><th>Аудан</th><th>Түрі</th><th style="text-align:center">Тапсыру</th><th style="text-align:center">Мәртебе</th></tr></thead>
+      <tbody>
+        <tr><td>Андас-3 тоғаны</td><td>—</td><td>Тоған</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Су каналы №1</td><td>—</td><td>Су каналы</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Су каналы №2</td><td>—</td><td>Су каналы</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Су каналы №3</td><td>—</td><td>Су каналы</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Су каналы №4</td><td>—</td><td>Су каналы</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Су каналы №5</td><td>—</td><td>Су каналы</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Гидроқұрылыс (Шу өзені)</td><td>Мойынқұм ауд.</td><td>Гидро</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b br">⚠️ Тоқтатылды</span></td></tr>
+        <tr><td>Благовещенск су каналы</td><td>Қордай ауд.</td><td>Су каналы</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b bm">2027 өтпелі</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="issue"><div class="it">⚠️ Мойынқұм ауд. Шу өзені гидроқұрылысы тоқтатылды</div><div class="ib">Жобалық қателіктер мен дұрыс емес техникалық шешімдерге байланысты тоқтатылды. «Институт Казгипроводхоз» ЖШС қайта жобалауда. Тапсырыс беруші — Мойынқұм аудан.</div></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ІШКІ ІСТЕР
+══════════════════════════════════════ -->
+<div class="page" id="page-ish">
+  <div class="ptitle"><em>🏛 Ішкі істер / Әкімшілік ғимараттар</em> · 2 нысан · Смета: 4,8 млрд тг · 2026 бюджет: 3,5 млрд тг</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">2</div></div>
+    <div class="kpi" style="--ac:var(--purple)"><div class="kl">Смета</div><div class="kv" style="color:var(--purple)">4,8</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">3,5</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">1</div></div>
+    <div class="kpi" style="--ac:var(--muted-c)"><div class="kl">2027 өтпелі</div><div class="kv" style="color:var(--muted-c)">1</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="cc"><div class="ct">Статус</div><div class="cw" style="height:200px"><canvas id="c-ish-s"></canvas></div></div>
+    <div class="cc"><div class="ct">Смета vs Бюджет (млрд тг)</div><div class="cw" style="height:200px"><canvas id="c-ish-b"></canvas></div></div>
+    <div class="cc"><div class="ct">Нысан түрлері</div><div class="cw" style="height:200px"><canvas id="c-ish-t"></canvas></div></div>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:10px">
+    <div class="tbl-head">🏛 Нысандар тізімі</div>
+    <table>
+      <thead><tr><th>Нысан</th><th>Түрі</th><th style="text-align:center">Тапсыру</th><th style="text-align:center">Мәртебе</th></tr></thead>
+      <tbody>
+        <tr><td>Қаратау қ. жатақхананы әкімшілік ғимарат үшін қайта жаңғырту</td><td>Әкімшілік</td><td style="text-align:center">2026</td><td style="text-align:center"><span class="b bb">Жүргізілуде</span></td></tr>
+        <tr><td>Шу РОВД ғимараты</td><td>ІІД</td><td style="text-align:center">2027</td><td style="text-align:center"><span class="b bm">2027 өтпелі</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="padding:10px 12px;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:8px;font-size:11px;color:var(--fg)">
+    <b style="color:var(--blue)">ℹ️ ЖСҚ дайын:</b> Мемлекеттік орган — 6 жоба, жалпы құны 9,1 млрд тг. Қаржыландыруды күтуде.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ТҰРҒЫН ҮЙ
+══════════════════════════════════════ -->
+<div class="page" id="page-tur">
+  <div class="ptitle"><em>🏘 Тұрғын үй саласы</em> · 66 нысан (2 941 пәтер) · Бюджет: 14,9 млрд тг · Тапсыру 2026: 35 үй / 1 685 пәтер</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">66</div><div class="ks">кредиттік үй</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">Барлық пәтер</div><div class="kv" style="color:var(--orange)">2 941</div></div>
+    <div class="kpi" style="--ac:var(--purple)"><div class="kl">Бюджет</div><div class="kv" style="color:var(--purple)">14,9</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">35</div><div class="ks">үй / 1 685 пәтер</div></div>
+    <div class="kpi" style="--ac:var(--red)"><div class="kl">Кезекте</div><div class="kv" style="color:var(--red)">58 000+</div><div class="ks">азамат</div></div>
+    <div class="kpi" style="--ac:var(--green)"><div class="kl">2026 жоспар</div><div class="kv" style="color:var(--green)">770 мың</div><div class="ks">м² барлық ТҮ</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="cc"><div class="ct">Пәтер сатып алу аудан бойынша (дана, РБ ТОХ 2026)</div><div class="cw" style="height:220px"><canvas id="c-tur-buy"></canvas></div></div>
+    <div class="cc"><div class="ct">Кредиттік үйлер тапсыру 2026 ж. (пәтер санымен)</div><div class="cw" style="height:220px"><canvas id="c-tur-cr"></canvas></div></div>
+    <div class="cc"><div class="ct">Тұрғын үй игерілуі (мың м²)</div><div class="cw" style="height:220px"><canvas id="c-tur-ar"></canvas></div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1.5fr 1fr">
+    <div class="cc"><div class="ct">ЖТҮ жер учаске кезегі аудан бойынша (220 960 азамат жиыны)</div><div class="cw" style="height:200px"><canvas id="c-tur-q"></canvas></div></div>
+    <div class="cc"><div class="ct">2026 тұрғын үй: бюджет vs жеке меншік</div><div class="cw" style="height:200px"><canvas id="c-tur-src"></canvas></div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="issue"><div class="it">⚠️ «Вилена» ЖШС — Тараз, Сүлейменов к.</div><div class="ib">80 пәтерлі үй. Сот шешімімен жосықсыз деп танылды. КШ бұзылды. Қылмыстық іс. Түзету + 550 млн тг қосымша қажет.</div></div>
+    <div class="issue"><div class="it">⚠️ «SHEBERBUILD» ЖШС — Шу ауданы</div><div class="ib">Сот өндіреді: 100 млн аванс + 11,7 млн КШ + 92,9 млн тұрақсыздық + 6,1 млн сот = ~211 млн тг.</div></div>
+    <div class="issue"><div class="it">⚠️ Пәтер сатып алу 77% қысқарды</div><div class="ib">2025: 1 425 пәтер (21,5 млрд) → 2026: 350 пәтер (4,9 млрд). 770 мың м² жоспар тәуекелі бар. 1 000 пәтерге қосымша сұралуда.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ИКИ
+══════════════════════════════════════ -->
+<div class="page" id="page-iki">
+  <div class="ptitle"><em>🔧 Инженерлік коммуникациялық инфрақұрылым (ИКИ)</em> · 30 нысан · 6,24 млрд тг · Тапсыру 2026: 24</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="kpi" style="--ac:var(--blue)"><div class="kl">Барлық нысан</div><div class="kv" style="color:var(--blue)">30</div></div>
+    <div class="kpi" style="--ac:var(--orange)"><div class="kl">2026 бюджет</div><div class="kv" style="color:var(--orange)">6,24</div><div class="ks">млрд тг</div></div>
+    <div class="kpi" style="--ac:var(--teal)"><div class="kl">Тапсыру 2026</div><div class="kv" style="color:var(--teal)">24</div></div>
+    <div class="kpi" style="--ac:var(--muted-c)"><div class="kl">2027 өтпелі</div><div class="kv" style="color:var(--muted-c)">6</div></div>
+    <div class="kpi" style="--ac:var(--green)"><div class="kl">Аяқталды</div><div class="kv" style="color:var(--green)">4</div></div>
+    <div class="kpi" style="--ac:var(--red)"><div class="kl">Жер кезегі</div><div class="kv" style="color:var(--red)">220 960</div><div class="ks">азамат (ЖТҮ)</div></div>
+  </div>
+  <div class="cg" style="grid-template-columns:1.6fr 1fr 1fr">
+    <div class="cc"><div class="ct">Жер учаске кезегі аудан бойынша (ЖТҮ үшін)</div><div class="cw" style="height:220px"><canvas id="c-iki-q"></canvas></div></div>
+    <div class="cc"><div class="ct">ИКИ жоба санаттары (млрд тг)</div><div class="cw" style="height:220px"><canvas id="c-iki-c"></canvas></div></div>
+    <div class="cc"><div class="ct">Тапсыру 2026 / Өтпелі / Аяқталды</div><div class="cw" style="height:220px"><canvas id="c-iki-s"></canvas></div></div>
+  </div>
+  <div class="tbl-wrap" style="margin-bottom:10px">
+    <div class="tbl-head">✅ Аяқталған 4 нысан (бүгінгі күнге)</div>
+    <table>
+      <thead><tr><th>Нысан</th><th style="text-align:center">Мәртебе</th></tr></thead>
+      <tbody>
+        <tr><td>Тараз қ. Сүлейменов к. 40-1 инженерлік желілері және абаттандыру</td><td style="text-align:center"><span class="b bg">✓ Аяқталды</span></td></tr>
+        <tr><td>Тараз қ. Сүлейменов к. 46-1 инженерлік желілері және абаттандыру</td><td style="text-align:center"><span class="b bg">✓ Аяқталды</span></td></tr>
+        <tr><td>Байзақ ауд. Қостөбе а. 20 га тұрғын алқабын сумен жабдықтау</td><td style="text-align:center"><span class="b bg">✓ Аяқталды</span></td></tr>
+        <tr><td>Қордай ауд. Ауқатты а. тұрғын алаб 0,4 кВ ӘЖ электр желілері</td><td style="text-align:center"><span class="b bg">✓ Аяқталды</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="cg" style="grid-template-columns:1fr 1fr">
+    <div class="issue"><div class="it">⚠️ Асқаров к. II кезең электрмен жабдықтау (Тараз)</div><div class="ib">Жалпы 13,2 млрд. Бөлінген 4,5 млрд (2025—2,5; 2026—2,0). Аяқтауға 8,7 млрд қажет; 2026 ж. 5,0 млрд сұралуда. 82 МҮ, 8 әлеуметтік нысан, 865 жер учаске тәуелді.</div></div>
+    <div class="issue"><div class="it">⚠️ 9 нысанның жер телімі Басқарма теңгеріміне берілмеген</div><div class="ib">ІТ лицей, №27, Құсақ, Тоғызтарау, Қарақат, Ойық, С.Шакиров, Шоқпар, Еңбекші — пайдалануға беру мен мемлекеттік тіркеу кешігуде.</div></div>
+  </div>
+</div>
+
+  </main>
+</div>
+
+<script>
+// =================== DATA ===================
+const S=[
+  {n:'Білім',      o:14, e:22.8, b:10.0, d:11, c:3,  done:1},
+  {n:'Денсаулық',  o:5,  e:86.9, b:38.8, d:2,  c:3,  done:0},
+  {n:'Спорт',      o:7,  e:3.2,  b:1.7,  d:7,  c:0,  done:0},
+  {n:'Мәдениет',   o:11, e:7.5,  b:3.5,  d:10, c:1,  done:2},
+  {n:'Ауыл шар.',  o:8,  e:9.3,  b:4.2,  d:6,  c:2,  done:0},
+  {n:'Ішкі істер', o:2,  e:4.8,  b:3.5,  d:1,  c:1,  done:0},
+  {n:'Тұрғын үй',  o:66, e:42.0, b:14.9, d:35, c:31, done:2},
+  {n:'ИКИ',        o:30, e:15.0, b:6.24, d:24, c:6,  done:4},
+];
+const SC=['#0079F2','#dc2626','#0E8C5A','#7C3AED','#16a34a','#d97706','#F97316','#0891b2'];
+const C={b:'#0079F2',t:'#0E8C5A',o:'#F97316',r:'#dc2626',p:'#7C3AED',g:'#16a34a',a:'#d97706',mu:'#94a3b8'};
+
+const BUY_D=[
+  {d:'Тараз',n:180},{d:'Байзақ',n:30},{d:'Жамбыл',n:20},{d:'Жуалы',n:10},
+  {d:'Қордай',n:30},{d:'Меркі',n:14},{d:'Т.Рысқ.',n:20},{d:'Талас',n:10},
+  {d:'Сарысу',n:16},{d:'Шу',n:20}
+];
+const QUEUE=[
+  {d:'Тараз',n:130466},{d:'Байзақ',n:15205},{d:'Жамбыл',n:11990},{d:'Қордай',n:17791},
+  {d:'Меркі',n:14950},{d:'Жуалы',n:6562},{d:'Т.Рысқ.',n:8597},{d:'Шу',n:12118},
+  {d:'Сарысу',n:1825},{d:'Талас',n:1155},{d:'Мойынқ.',n:301}
+].sort((a,b)=>b.n-a.n);
+
+// =================== NAV ===================
+document.querySelectorAll('.nk').forEach(el=>{
+  el.addEventListener('click',e=>{
+    e.preventDefault();
+    const id=el.getAttribute('data-p');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+id).classList.add('active');
+    document.querySelectorAll('.nk').forEach(l=>l.classList.remove('active'));
+    el.classList.add('active');
+    // scroll to top
+    document.getElementById('page-'+id).scrollTop=0;
+  });
+});
+
+let dark=false;
+function toggleDark(){
+  dark=!dark;
+  document.body.classList.toggle('dark',dark);
+  document.getElementById('ic-moon').style.display=dark?'none':'block';
+  document.getElementById('ic-sun').style.display=dark?'block':'none';
+}
+
+// =================== CHART DEFAULTS ===================
+Chart.defaults.font.family="'IBM Plex Sans',sans-serif";
+Chart.defaults.font.size=9;
+Chart.defaults.plugins.legend.display=false;
+Chart.defaults.plugins.tooltip.backgroundColor='rgba(20,30,55,.92)';
+Chart.defaults.plugins.tooltip.titleFont={size:10,weight:'600'};
+Chart.defaults.plugins.tooltip.bodyFont={size:10};
+Chart.defaults.plugins.tooltip.padding=8;
+Chart.defaults.plugins.tooltip.cornerRadius=6;
+Chart.defaults.animation=false;
+Chart.defaults.responsive=true;
+Chart.defaults.maintainAspectRatio=false;
+const GC='rgba(0,0,0,.07)';const TC='#94a3b8';
+function sc(){return{x:{grid:{color:GC},ticks:{color:TC,maxRotation:40}},y:{grid:{color:GC},ticks:{color:TC}}};}
+function leg(){return{display:true,position:'bottom',labels:{boxWidth:10,font:{size:9},padding:6}};}
+
+// =================== OVERVIEW TABLE ===================
+(()=>{
+  const tb=document.getElementById('ov-tb');
+  S.forEach((s,i)=>{
+    const pct=Math.round(s.d/s.o*100);
+    const col=pct===100?C.g:pct>=75?C.t:pct>=50?C.o:C.r;
+    tb.innerHTML+=`<tr>
+      <td><b style="color:${SC[i]}">${s.n}</b></td>
+      <td style="text-align:center;font-weight:700">${s.o}</td>
+      <td style="text-align:right">${s.e.toFixed(1)} млрд</td>
+      <td style="text-align:right;color:var(--orange);font-weight:600">${s.b.toFixed(2)} млрд</td>
+      <td style="text-align:center"><span class="b bg">${s.d}</span></td>
+      <td style="text-align:center">${s.c>0?`<span class="b bm">${s.c}</span>`:'—'}</td>
+      <td style="text-align:center">${s.done>0?`<span class="b bg">✓ ${s.done}</span>`:'—'}</td>
+      <td style="text-align:center">
+        <div style="display:flex;align-items:center;gap:5px;justify-content:center">
+          <div class="pw"><div class="pf" style="width:${pct}%;background:${col}"></div></div>
+          <span style="color:${col};font-weight:700;font-size:10px;min-width:30px">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  });
+})();
+
+// =================== ALL CHARTS ===================
+
+// — Overview —
+new Chart('c-ov-n',{type:'bar',data:{labels:S.map(s=>s.n),datasets:[{data:S.map(s=>s.o),backgroundColor:SC,borderRadius:4,barPercentage:.7}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} нысан`}}}}});
+new Chart('c-ov-pie',{type:'doughnut',data:{labels:['2026 тапсыру (96)','2027 өтпелі (47)','Аяқталды (9)'],datasets:[{data:[96,47,9],backgroundColor:[C.t,C.mu,C.g],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-ov-prog',{type:'doughnut',data:{labels:['ТҮ тұжырымдама 2023-29 (26 млрд)','Өңірлерді дамыту (48,6 млрд)','Ауыл-Ел бесігі (7,1 млрд)','Арнайы қор (4,5 млрд)'],datasets:[{data:[26,48.6,7.1,4.5],backgroundColor:[C.b,C.p,C.t,C.o],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-ov-bud',{type:'bar',data:{labels:S.map(s=>s.n),datasets:[{label:'Смета',data:S.map(s=>s.e),backgroundColor:C.mu+'99',borderRadius:3,barPercentage:.6},{label:'2026 бюджет',data:S.map(s=>s.b),backgroundColor:SC.map(c=>c+'cc'),borderRadius:3,barPercentage:.6}]},options:{scales:sc(),plugins:{legend:leg(),tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.toFixed(2)} млрд тг`}}}}});
+new Chart('c-ov-del',{type:'bar',data:{labels:S.map(s=>s.n),datasets:[{data:S.map(s=>Math.round(s.d/s.o*100)),backgroundColor:S.map(s=>{const p=s.d/s.o*100;return p===100?C.g:p>=75?C.t:p>=50?C.o:C.r;}),borderRadius:4,barPercentage:.7}]},options:{scales:{...sc(),y:{...sc().y,ticks:{...sc().y.ticks,callback:v=>v+'%'},max:100}},plugins:{tooltip:{callbacks:{label:c=>`${c.raw}%`}}}}});
+
+// — Білім —
+new Chart('c-bil-d',{type:'bar',data:{labels:['Тараз қ.','Байзақ','Жамбыл','Мойынқұм','Т.Рысқұлов','Талас','Шу'],datasets:[{data:[2,1,2,1,1,1,6],backgroundColor:C.b,borderRadius:4,barPercentage:.7}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} нысан`}}}}});
+new Chart('c-bil-t',{type:'doughnut',data:{labels:['Жапсарлас (10)','Жаңа мектеп (4)'],datasets:[{data:[10,4],backgroundColor:[C.b,C.t],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-bil-p',{type:'bar',data:{labels:['Облыстық бюджет','Ауыл-Ел бесігі'],datasets:[{label:'Нысан',data:[7,7],backgroundColor:C.b+'cc',borderRadius:3,barPercentage:.5,yAxisID:'y'},{label:'Млрд тг',data:[6.5,3.5],backgroundColor:C.t+'cc',borderRadius:3,barPercentage:.5,yAxisID:'y1'}]},options:{scales:{y:{position:'left',grid:{color:GC},ticks:{color:TC}},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{color:TC,callback:v=>v+' млрд'}},x:{grid:{color:GC},ticks:{color:TC}}},plugins:{legend:leg()}}});
+
+// — Денсаулық —
+new Chart('c-den-d',{type:'bar',data:{labels:['Тараз','Қордай','Талас','Шу'],datasets:[{data:[9.7,19.4,9.7,0],backgroundColor:[C.b,C.r,C.t,C.o],borderRadius:4,barPercentage:.6}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} млрд тг`}}}}});
+new Chart('c-den-s',{type:'doughnut',data:{labels:['2026 тапсыру (2)','2027 өтпелі (3)'],datasets:[{data:[2,3],backgroundColor:[C.t,C.mu],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-den-b',{type:'bar',data:{labels:['Смета','2026 бюджет'],datasets:[{data:[86.9,38.8],backgroundColor:[C.p+'88',C.o+'cc'],borderRadius:4,barPercentage:.5}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} млрд тг`}}}}});
+
+// — Спорт —
+new Chart('c-sp-d',{type:'bar',data:{labels:['Жамбыл','Жуалы','Қордай','Меркі','Т.Рысқ.','Шу'],datasets:[{data:[1,2,1,1,1,1],backgroundColor:[C.t,C.o,C.t,C.r,C.t,C.t],borderRadius:4,barPercentage:.65}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} нысан`}}}}});
+new Chart('c-sp-s',{type:'doughnut',data:{labels:['Жоспарлы (5)','Проблемалы (2)'],datasets:[{data:[5,2],backgroundColor:[C.t,C.r],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-sp-k',{type:'bar',data:{labels:['Көлтоған (Жуалы)','Сарымолдаев (Меркі)'],datasets:[{data:[60,20],backgroundColor:[C.o,C.r],borderRadius:4,barPercentage:.5}]},options:{scales:{...sc(),y:{...sc().y,ticks:{...sc().y.ticks,callback:v=>v+'%'},max:100}},plugins:{tooltip:{callbacks:{label:c=>`ҚМЖ: ${c.raw}%`}}}}});
+
+// — Мәдениет —
+new Chart('c-mad-d',{type:'bar',data:{labels:['Тараз қ.','Жамбыл','Жуалы','Қордай','Т.Рысқ.','Талас','Белгісіз'],datasets:[{data:[2,2,1,2,1,2,1],backgroundColor:C.p,borderRadius:4,barPercentage:.7}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} нысан`}}}}});
+new Chart('c-mad-s',{type:'bar',data:{labels:['2026 тапсыру','2027 өтпелі'],datasets:[{data:[10,1],backgroundColor:[C.t,C.mu],borderRadius:4,barPercentage:.5}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} нысан`}}}}});
+new Chart('c-mad-p',{type:'doughnut',data:{labels:['Аяқталды (2)','Жүргізілуде (7)','Қабылдауда (1)','2027 өтпелі (1)'],datasets:[{data:[2,7,1,1],backgroundColor:[C.g,C.b,C.a,C.mu],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+
+// — Ауыл —
+new Chart('c-aul-t',{type:'doughnut',data:{labels:['Су каналы (6)','Тоған (1)','Гидроқұрылыс (1)'],datasets:[{data:[6,1,1],backgroundColor:[C.b,C.t,C.r],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-aul-s',{type:'bar',data:{labels:['2026 тапсыру','2027 өтпелі'],datasets:[{data:[6,2],backgroundColor:[C.t,C.mu],borderRadius:4,barPercentage:.5}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} нысан`}}}}});
+new Chart('c-aul-b',{type:'bar',data:{labels:['Смета','2026 бюджет'],datasets:[{data:[9.3,4.2],backgroundColor:[C.p+'88',C.t+'cc'],borderRadius:4,barPercentage:.5}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} млрд тг`}}}}});
+
+// — Ішкі —
+new Chart('c-ish-s',{type:'doughnut',data:{labels:['2026 тапсыру (1)','2027 өтпелі (1)'],datasets:[{data:[1,1],backgroundColor:[C.t,C.mu],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-ish-b',{type:'bar',data:{labels:['Смета','2026 бюджет'],datasets:[{data:[4.8,3.5],backgroundColor:[C.p+'88',C.o+'cc'],borderRadius:4,barPercentage:.5}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} млрд тг`}}}}});
+new Chart('c-ish-t',{type:'doughnut',data:{labels:['ІІД ғимараты','Әкімшілік жаңарту'],datasets:[{data:[1,1],backgroundColor:[C.b,C.p],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+
+// — Тұрғын үй —
+new Chart('c-tur-buy',{type:'bar',data:{labels:BUY_D.map(d=>d.d),datasets:[{data:BUY_D.map(d=>d.n),backgroundColor:BUY_D.map(d=>d.n>=100?C.b:d.n>=30?C.t:C.mu),borderRadius:3,barPercentage:.7}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} пәтер`}}}}});
+new Chart('c-tur-cr',{type:'bar',data:{labels:['15 мкр\n(11 үй)','Асқаров\n(4 үй)','14 мкр\n(17 үй)','Сарысу\n(1 үй)','Қордай\n(2 үй)'],datasets:[{data:[695,180,600,90,120],backgroundColor:[C.b,C.p,C.t,C.o,C.a],borderRadius:3,barPercentage:.7}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw} пәтер`}}}}});
+new Chart('c-tur-ar',{type:'bar',data:{labels:['2025 факт','2026 жоспар','2026 Қаң-Сәу'],datasets:[{data:[768.9,770.0,176.3],backgroundColor:[C.mu+'99',C.b+'cc',C.t+'cc'],borderRadius:4,barPercentage:.6}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw.toFixed(1)} мың м²`}}}}});
+new Chart('c-tur-q',{type:'bar',data:{labels:QUEUE.map(d=>d.d),datasets:[{data:QUEUE.map(d=>d.n),backgroundColor:QUEUE.map(d=>d.n>50000?C.r:d.n>10000?C.o:C.t),borderRadius:3,barPercentage:.7}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw.toLocaleString('ru-RU')} азамат`}}}}});
+new Chart('c-tur-src',{type:'doughnut',data:{labels:['Бюджет 164 мың м² (21,4%)','Жеке 606 мың м² (78,6%)'],datasets:[{data:[164,606],backgroundColor:[C.b,C.t],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+
+// — ИКИ —
+new Chart('c-iki-q',{type:'bar',data:{labels:QUEUE.map(d=>d.d),datasets:[{data:QUEUE.map(d=>d.n),backgroundColor:QUEUE.map(d=>d.n>50000?C.r:d.n>10000?C.o:C.b),borderRadius:3,barPercentage:.7}]},options:{scales:sc(),plugins:{tooltip:{callbacks:{label:c=>`${c.raw.toLocaleString('ru-RU')} азамат`}}}}});
+new Chart('c-iki-c',{type:'doughnut',data:{labels:['Жаңа алқап 6 жоба (0,24 млрд)','Кеңейту 3 жоба (2,0 млрд)','Инд. аймақ 6 жоба (3,99 млрд)','Ішкі алаңдық 14 жоба'],datasets:[{data:[0.24,2.0,3.99,0.01],backgroundColor:[C.b,C.t,C.p,C.mu],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+new Chart('c-iki-s',{type:'doughnut',data:{labels:['2026 тапсыру (24)','2027 өтпелі (6)','Аяқталды (4)'],datasets:[{data:[24,6,4],backgroundColor:[C.t,C.mu,C.g],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:leg()}}});
+</script>
+</body>
+</html>
